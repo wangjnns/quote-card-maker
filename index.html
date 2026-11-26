@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuoteCard — Turn your words into beautiful shareable cards</title>
+<meta name="description" content="Paste a quote, pick a style, download a beautiful card for LinkedIn, X, Instagram and blog covers. Free, no sign-up, 100% in your browser.">
+<meta property="og:title" content="QuoteCard — beautiful shareable quote cards">
+<meta property="og:description" content="Paste a quote, pick a style, download a PNG. Free, no sign-up, 100% in your browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#10022;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,600;1,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #fafafa;
+    --panel: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #7c3aed;
+    --accent-hover: #6d28d9;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 1120px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-weight: 800; font-size: 19px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+  .logo .star { color: var(--accent); }
+  .btn-upgrade {
+    background: #111827; color: #fff; border: none; cursor: pointer;
+    padding: 9px 18px; border-radius: 10px; font-weight: 600; font-size: 14px;
+    transition: background .15s; font-family: inherit;
+  }
+  .btn-upgrade:hover { background: #000; }
+
+  /* ---------- Hero ---------- */
+  .hero { max-width: 1120px; margin: 0 auto; padding: 56px 24px 8px; }
+  .hero h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+  .hero p { margin-top: 12px; color: var(--muted); font-size: 17px; max-width: 560px; line-height: 1.55; }
+
+  /* ---------- Tool layout ---------- */
+  .tool {
+    max-width: 1120px; margin: 0 auto; padding: 32px 24px 72px;
+    display: grid; grid-template-columns: 380px 1fr; gap: 36px; align-items: start;
+  }
+  @media (max-width: 920px) { .tool { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .field label {
+    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px;
+  }
+  textarea, input[type="text"] {
+    width: 100%; border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text);
+    background: #fff; transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 108px; line-height: 1.5; }
+  textarea:focus, input[type="text"]:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+  }
+  .hint { margin-top: 6px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* avatar upload */
+  .avatar-row { display: flex; align-items: center; gap: 12px; }
+  .avatar-preview {
+    width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--border); display: none;
+  }
+  .btn-ghost {
+    border: 1px dashed #d1d5db; background: #fff; color: var(--muted);
+    padding: 9px 14px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: border-color .15s, color .15s; font-family: inherit;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-remove { color: #dc2626; display: none; }
+  .btn-remove:hover { color: #b91c1c; border-color: #b91c1c; }
+  /* theme swatches */
+  .swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+  .swatch {
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: none;
+    outline: 2px solid transparent; outline-offset: 2px; transition: outline-color .15s, transform .15s;
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.active { outline-color: var(--accent); }
+  .swatch-name { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* segmented controls */
+  .segmented { display: flex; background: #f3f4f6; border-radius: 10px; padding: 3px; gap: 2px; }
+  .segmented button {
+    flex: 1; border: none; background: transparent; cursor: pointer;
+    padding: 8px 4px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    color: var(--muted); transition: all .15s; font-family: inherit;
+  }
+  .segmented button.active { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  .format-note { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  /* slider */
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  /* watermark lock */
+  .watermark-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+  }
+  .watermark-row span { font-size: 13px; font-weight: 500; }
+  .lock-btn {
+    border: none; background: #f3f4f6; border-radius: 6px; cursor: pointer;
+    padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--muted); font-family: inherit;
+  }
+  .lock-btn:hover { color: var(--accent); }
+
+  /* download button */
+  .btn-download {
+    width: 100%; background: var(--accent); color: #fff; border: none; cursor: pointer;
+    padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; font-family: inherit;
+    transition: background .15s, transform .1s;
+    box-shadow: 0 4px 14px rgba(124,58,237,0.25);
+  }
+  .btn-download:hover { background: var(--accent-hover); }
+  .btn-download:active { transform: translateY(1px); }
+  .btn-download:disabled { opacity: 0.6; cursor: wait; }
+
+  .privacy-note { text-align: center; font-size: 12px; color: var(--muted); }
+
+  /* ---------- Preview ---------- */
+  .preview-zone {
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+    padding: 40px 16px; border-radius: var(--radius);
+    background:
+      radial-gradient(circle at 1px 1px, #e5e7eb 1px, transparent 0) 0 0 / 22px 22px,
+      #f3f4f6;
+    border: 1px solid var(--border); min-height: 560px; justify-content: center;
+  }
+  .preview-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9ca3af; }
+
+  /* ---------- The Card (export target) ---------- */
+  .card {
+    width: 440px; max-width: 100%;
+    aspect-ratio: var(--card-ratio, 1 / 1);
+    border-radius: 18px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.18);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 48px;
+  }
+  .card.exporting { box-shadow: none !important; }
+  .card.wide { padding: 36px 44px; }
+
+  .card .quote-mark {
+    position: absolute; top: 6px; left: 34px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 130px; line-height: 1; opacity: 0.9;
+  }
+  .card .card-text {
+    flex: 1; display: flex; align-items: center;
+    font-weight: 700; line-height: 1.42; letter-spacing: -0.01em;
+    white-space: pre-wrap; word-break: break-word;
+    text-align: left; padding-top: 34px;
+  }
+  .card.font-modern .card-text { font-family: 'Inter', sans-serif; }
+  .card.font-classic .card-text { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-weight: 600; }
+  .card.font-mono .card-text { font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace; font-weight: 500; }
+
+  .card .card-author { display: flex; align-items: center; gap: 14px; }
+  .card .avatar-wrap {
+    width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .card .avatar-initial {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 22px; font-family: 'Inter', sans-serif;
+  }
+  .card .author-name { font-size: 16px; font-weight: 700; font-family: 'Inter', sans-serif; }
+  .card .author-handle { font-size: 13px; font-family: 'Inter', sans-serif; margin-top: 2px; }
+  .card .card-watermark {
+    position: absolute; right: 20px; bottom: 16px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    font-family: 'Inter', sans-serif; opacity: 0.85;
+  }
+  /* ---------- Features / FAQ ---------- */
+  .features { max-width: 1120px; margin: 0 auto; padding: 0 24px 64px; }
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 920px) { .features-grid { grid-template-columns: 1fr; } }
+  .feature {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px;
+  }
+  .feature .icon { font-size: 24px; }
+  .feature h3 { margin-top: 10px; font-size: 16px; font-weight: 700; }
+  .feature p { margin-top: 6px; font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+  .faq { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; }
+  .faq h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 20px; }
+  .faq details { border-bottom: 1px solid var(--border); padding: 16px 0; }
+  .faq summary { font-weight: 600; font-size: 15px; cursor: pointer; }
+  .faq details p { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  footer { border-top: 1px solid var(--border); }
+  .footer-inner {
+    max-width: 1120px; margin: 0 auto; padding: 28px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: var(--muted); flex-wrap: wrap; gap: 8px;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 20px; padding: 32px; max-width: 420px; width: 100%;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.25);
+  }
+  .modal h3 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .modal ul { list-style: none; margin: 18px 0; display: flex; flex-direction: column; gap: 10px; }
+  .modal li { font-size: 14px; display: flex; gap: 10px; align-items: baseline; color: #374151; }
+  .modal .price { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+  .modal .price span { color: var(--muted); font-weight: 500; }
+  .modal .btn-primary {
+    width: 100%; background: var(--accent); color: #fff; border: none; cursor: pointer;
+    padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit;
+  }
+  .modal .btn-primary:hover { background: var(--accent-hover); }
+  .modal .btn-link {
+    width: 100%; margin-top: 10px; background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit; padding: 8px;
+  }
+  .modal .btn-link:hover { color: var(--text); }
+  .modal .demo-note { margin-top: 16px; font-size: 12px; color: #9ca3af; text-align: center; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; right: 24px; bottom: 24px; z-index: 200;
+    background: #111827; color: #fff; padding: 13px 20px; border-radius: 12px;
+    font-size: 14px; font-weight: 500; box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    opacity: 0; transform: translateY(12px); transition: all .25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="logo"><span class="star">&#10022;</span> QuoteCard</div>
+    <button class="btn-upgrade" onclick="openModal()">Upgrade to Pro</button>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Turn your words into<br>beautiful shareable cards.</h1>
+  <p>Paste a quote, pick a style, download a PNG. Free, no sign-up, and everything renders right in your browser.</p>
+</section>
+
+<main class="tool">
+  <!-- ============ Controls ============ -->
+  <aside class="panel">
+    <div class="field">
+      <label for="inpText">Quote</label>
+      <textarea id="inpText" spellcheck="false"></textarea>
+      <div class="hint"><span>Line breaks are kept</span><span id="charCount"></span></div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="inpAuthor">Author</label>
+        <input type="text" id="inpAuthor" placeholder="Author name">
+      </div>
+      <div class="field">
+        <label for="inpHandle">Handle</label>
+        <input type="text" id="inpHandle" placeholder="@handle">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Avatar</label>
+      <div class="avatar-row">
+        <img class="avatar-preview" id="avatarPreview" alt="avatar">
+        <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">Upload photo</button>
+        <button class="btn-ghost btn-remove" id="btnRemove" onclick="removeAvatar()">Remove</button>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Theme</label>
+      <div class="swatches" id="swatches"></div>
+      <div class="swatch-name" id="swatchName"></div>
+    </div>
+
+    <div class="field">
+      <label>Format</label>
+      <div class="segmented" id="formatSeg"></div>
+      <div class="format-note" id="formatNote"></div>
+    </div>
+
+    <div class="field">
+      <label>Typeface</label>
+      <div class="segmented" id="fontSeg">
+        <button data-font="modern" class="active">Modern</button>
+        <button data-font="classic">Classic</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="inpSize">Text size</label>
+      <input type="range" id="inpSize" min="22" max="48" value="32">
+    </div>
+
+    <div class="watermark-row">
+      <span>Remove watermark</span>
+      <button class="lock-btn" onclick="openModal()">&#128274; Pro</button>
+    </div>
+
+    <button class="btn-download" id="btnDownload">Download PNG</button>
+    <div class="privacy-note">&#128274; 100% client-side &middot; no account needed</div>
+  </aside>
+
+  <!-- ============ Preview ============ -->
+  <section class="preview-zone">
+    <div class="preview-label">Live preview</div>
+    <div class="card font-modern" id="card">
+      <div class="quote-mark" id="quoteMark">&ldquo;</div>
+      <div class="card-text" id="cardText"></div>
+      <div class="card-author">
+        <div class="avatar-wrap" id="avatarWrap"></div>
+        <div>
+          <div class="author-name" id="cardAuthorName"></div>
+          <div class="author-handle" id="cardAuthorHandle"></div>
+        </div>
+      </div>
+      <div class="card-watermark" id="cardWatermark">&#10022; made with QuoteCard</div>
+    </div>
+  </section>
+</main>
+<!-- ============ Features ============ -->
+<section class="features">
+  <div class="features-grid">
+    <div class="feature">
+      <div class="icon">&#9889;</div>
+      <h3>Instant export</h3>
+      <p>Download crisp, high-resolution PNGs (up to 1600&times;900) in one click. No watermark clutter, no email required.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">&#128274;</div>
+      <h3>100% private</h3>
+      <p>Everything renders in your browser. Your quotes and photos never touch a server &mdash; there is no server.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">&#127912;</div>
+      <h3>Made for social</h3>
+      <p>Perfect sizes for X posts, LinkedIn updates, Instagram feeds and blog open-graph covers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="faq">
+  <h2>FAQ</h2>
+  <details>
+    <summary>Is it really free?</summary>
+    <p>Yes. All 8 themes, 3 formats and PNG export are free. A tiny watermark sits in the corner &mdash; Pro removes it and unlocks premium themes.</p>
+  </details>
+  <details>
+    <summary>Where are my quotes stored?</summary>
+    <p>Nowhere. QuoteCard is a static page &mdash; your text and avatar stay in your browser tab and disappear when you close it.</p>
+  </details>
+  <details>
+    <summary>Can I use the cards commercially?</summary>
+    <p>Absolutely. The images you export are yours &mdash; use them in newsletters, decks, posts or client work.</p>
+  </details>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>&#10022; QuoteCard &mdash; made by an indie hacker</div>
+    <div>&copy; 2026 &middot; Free forever</div>
+  </div>
+</footer>
+
+<!-- ============ Upgrade modal ============ -->
+<div class="modal-overlay" id="upgradeModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>Upgrade to Pro</h3>
+    <ul>
+      <li>&#10003; Remove the watermark</li>
+      <li>&#10003; 30+ premium gradient themes</li>
+      <li>&#10003; Custom brand logo &amp; fonts</li>
+      <li>&#10003; Batch export (all formats at once)</li>
+    </ul>
+    <div class="price">$12 <span>one-time &middot; lifetime license</span></div>
+    <button class="btn-primary" onclick="fakeCheckout()">Continue to checkout &rarr;</button>
+    <button class="btn-link" onclick="closeModal()">Not now</button>
+    <div class="demo-note">Demo only &mdash; wire this button to your Lemon Squeezy product link.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  /* ================= Data ================= */
+  var THEMES = [
+    { id:'midnight', name:'Midnight',
+      bg:'linear-gradient(135deg,#0f0c29 0%,#302b63 55%,#24243e 100%)',
+      text:'#ffffff', sub:'rgba(255,255,255,0.72)', ring:'#818cf8',
+      mark:'rgba(129,140,248,0.85)', initialBg:'rgba(255,255,255,0.16)', swatch:'linear-gradient(135deg,#0f0c29,#302b63)' },
+    { id:'sunset', name:'Sunset',
+      bg:'linear-gradient(135deg,#ea580c 0%,#db2777 55%,#7c3aed 100%)',
+      text:'#ffffff', sub:'rgba(255,255,255,0.78)', ring:'#fda4af',
+      mark:'rgba(255,255,255,0.35)', initialBg:'rgba(255,255,255,0.2)', swatch:'linear-gradient(135deg,#ea580c,#db2777)' },
+    { id:'ocean', name:'Ocean',
+      bg:'linear-gradient(135deg,#0c4a6e 0%,#0369a1 55%,#06b6d4 100%)',
+      text:'#ffffff', sub:'rgba(255,255,255,0.75)', ring:'#38bdf8',
+      mark:'rgba(56,189,248,0.8)', initialBg:'rgba(255,255,255,0.16)', swatch:'linear-gradient(135deg,#0c4a6e,#06b6d4)' },
+    { id:'aurora', name:'Aurora',
+      bg:'linear-gradient(160deg,#064e3b 0%,#1d4ed8 55%,#5b21b6 100%)',
+      text:'#ffffff', sub:'rgba(255,255,255,0.75)', ring:'#34d399',
+      mark:'rgba(52,211,153,0.8)', initialBg:'rgba(255,255,255,0.16)', swatch:'linear-gradient(135deg,#064e3b,#5b21b6)' },
+    { id:'rose', name:'Rose',
+      bg:'linear-gradient(135deg,#831843 0%,#be185d 55%,#f472b6 100%)',
+      text:'#ffffff', sub:'rgba(255,255,255,0.78)', ring:'#f9a8d4',
+      mark:'rgba(249,168,212,0.75)', initialBg:'rgba(255,255,255,0.2)', swatch:'linear-gradient(135deg,#831843,#f472b6)' },
+    { id:'mono', name:'Mono',
+      bg:'#0a0a0a', text:'#fafafa', sub:'rgba(250,250,250,0.55)', ring:'#fafafa',
+      mark:'rgba(250,250,250,0.3)', initialBg:'rgba(255,255,255,0.12)', swatch:'linear-gradient(135deg,#0a0a0a,#525252)' },
+    { id:'paper', name:'Paper',
+      bg:'#ffffff', text:'#18181b', sub:'#71717a', ring:'#d4d4d8',
+      mark:'rgba(24,24,27,0.16)', initialBg:'#f4f4f5', swatch:'linear-gradient(135deg,#ffffff,#e4e4e7)', border:true },
+    { id:'terminal', name:'Terminal',
+      bg:'#0a0a0a', text:'#22c55e', sub:'rgba(34,197,94,0.65)', ring:'#22c55e',
+      mark:'rgba(34,197,94,0.5)', initialBg:'rgba(34,197,94,0.15)', swatch:'linear-gradient(135deg,#0a0a0a,#22c55e)',
+      fontOverride:'mono' }
+  ];
+
+  var FORMATS = {
+    square:   { label:'Square',   ratio:'1 / 1',  w:1080, h:1080, note:'X posts &middot; Instagram', px:'1080&times;1080' },
+    portrait: { label:'Portrait', ratio:'4 / 5',  w:1080, h:1350, note:'LinkedIn &middot; IG feed',    px:'1080&times;1350' },
+    wide:     { label:'Wide',     ratio:'16 / 9', w:1600, h:900,  note:'Blog &middot; OG cover',       px:'1600&times;900' }
+  };
+
+  var DEFAULTS = {
+    text: "You don't need a better plan.\nYou need to ship the one you already have.",
+    author: 'Alex Rivera',
+    handle: '@alexbuilds'
+  };
+
+  /* ================= State ================= */
+  var state = {
+    text: DEFAULTS.text,
+    author: DEFAULTS.author,
+    handle: DEFAULTS.handle,
+    avatar: null,
+    theme: 'midnight',
+    format: 'square',
+    font: 'modern',
+    size: 32
+  };
+
+  function $(id) { return document.getElementById(id); }
+  var card = $('card');
+
+  /* ================= Build controls ================= */
+  THEMES.forEach(function(t) {
+    var b = document.createElement('button');
+    b.className = 'swatch'; b.title = t.name;
+    b.style.background = t.swatch;
+    b.onclick = function() { state.theme = t.id; render(); };
+    $('swatches').appendChild(b);
+  });
+
+  Object.keys(FORMATS).forEach(function(key) {
+    var b = document.createElement('button');
+    b.textContent = FORMATS[key].label;
+    b.setAttribute('data-format', key);
+    b.onclick = function() { state.format = key; render(); };
+    $('formatSeg').appendChild(b);
+  });
+
+  /* ================= Inputs ================= */
+  $('inpText').value = state.text;
+  $('inpAuthor').value = state.author;
+  $('inpHandle').value = state.handle;
+
+  $('inpText').addEventListener('input', function(e) { state.text = e.target.value; render(); });
+  $('inpAuthor').addEventListener('input', function(e) { state.author = e.target.value; render(); });
+  $('inpHandle').addEventListener('input', function(e) { state.handle = e.target.value; render(); });
+  $('inpSize').addEventListener('input', function(e) { state.size = +e.target.value; render(); });
+
+  Array.prototype.forEach.call($('fontSeg').querySelectorAll('button'), function(b) {
+    b.onclick = function() { state.font = b.getAttribute('data-font'); render(); };
+  });
+
+  $('fileInput').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) { state.avatar = ev.target.result; render(); };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  function removeAvatar() { state.avatar = null; render(); }
+  /* ================= Render ================= */
+  function autoFitSize(len, format) {
+    var factor = 1;
+    if (len > 380) factor = 0.52;
+    else if (len > 260) factor = 0.62;
+    else if (len > 160) factor = 0.78;
+    else if (len > 90)  factor = 0.9;
+    if (format === 'wide') factor *= 0.88;
+    return Math.round(state.size * factor);
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function render() {
+    var t = THEMES.filter(function(x) { return x.id === state.theme; })[0];
+    var f = FORMATS[state.format];
+
+    /* card shell */
+    card.style.setProperty('--card-ratio', f.ratio);
+    card.style.background = t.bg;
+    card.style.color = t.text;
+    card.style.border = t.border ? '1px solid #e4e4e7' : 'none';
+
+    /* typeface (theme can override, e.g. Terminal forces mono) */
+    var fontClass = t.fontOverride ? 'font-' + t.fontOverride : 'font-' + state.font;
+    card.className = 'card ' + fontClass;
+    if (state.format === 'wide') card.classList.add('wide');
+
+    /* quote mark */
+    var mark = $('quoteMark');
+    mark.style.color = t.mark;
+    mark.style.display = (t.fontOverride === 'mono') ? 'none' : 'block';
+
+    /* text */
+    var textEl = $('cardText');
+    textEl.textContent = state.text || 'Your quote goes here...';
+    textEl.style.fontSize = autoFitSize((state.text || '').length, state.format) + 'px';
+
+    /* author */
+    $('cardAuthorName').textContent = state.author || '';
+    var handle = (state.handle || '').trim();
+    if (handle && handle.charAt(0) !== '@') handle = '@' + handle;
+    $('cardAuthorHandle').textContent = handle;
+    $('cardAuthorName').style.color = t.text;
+    $('cardAuthorHandle').style.color = t.sub;
+
+    /* avatar */
+    var wrap = $('avatarWrap');
+    if (state.avatar) {
+      wrap.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = state.avatar;
+      wrap.appendChild(img);
+    } else {
+      var letter = ((state.author || 'Q').trim().charAt(0) || 'Q').toUpperCase();
+      wrap.innerHTML = '<div class="avatar-initial">' + escapeHtml(letter) + '</div>';
+      var el = wrap.querySelector('.avatar-initial');
+      el.style.background = t.initialBg;
+      el.style.color = t.text;
+    }
+    wrap.style.border = '2px solid ' + t.ring;
+
+    /* watermark */
+    $('cardWatermark').style.color = t.sub;
+
+    /* control panel states */
+    Array.prototype.forEach.call(document.querySelectorAll('.swatch'), function(s, i) {
+      s.classList.toggle('active', THEMES[i].id === state.theme);
+    });
+    $('swatchName').textContent = t.name;
+    Array.prototype.forEach.call($('formatSeg').querySelectorAll('button'), function(b) {
+      b.classList.toggle('active', b.getAttribute('data-format') === state.format);
+    });
+    Array.prototype.forEach.call($('fontSeg').querySelectorAll('button'), function(b) {
+      b.classList.toggle('active', b.getAttribute('data-font') === state.font && !t.fontOverride);
+    });
+    $('formatNote').innerHTML = f.note;
+    $('btnDownload').innerHTML = 'Download PNG &middot; ' + f.px;
+    $('charCount').textContent = (state.text || '').length + ' chars';
+
+    /* avatar controls */
+    var prev = $('avatarPreview');
+    if (state.avatar) {
+      prev.src = state.avatar; prev.style.display = 'block';
+      $('btnRemove').style.display = 'inline-block';
+    } else {
+      prev.style.display = 'none';
+      $('btnRemove').style.display = 'none';
+    }
+  }
+
+  /* ================= Export PNG ================= */
+  $('btnDownload').addEventListener('click', function() {
+    var btn = $('btnDownload');
+    btn.disabled = true;
+    var old = btn.innerHTML;
+    btn.innerHTML = 'Rendering...';
+    card.classList.add('exporting');
+    var target = FORMATS[state.format];
+    var scale = target.w / card.offsetWidth;
+    html2canvas(card, { scale: scale, useCORS: true, backgroundColor: null }).then(function(canvas) {
+      card.classList.remove('exporting');
+      btn.disabled = false;
+      btn.innerHTML = old;
+      var link = document.createElement('a');
+      link.download = 'quote-card-' + state.theme + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('Saved quote-card-' + state.theme + '.png (' + canvas.width + 'px)');
+    }).catch(function(err) {
+      card.classList.remove('exporting');
+      btn.disabled = false;
+      btn.innerHTML = old;
+      showToast('Export failed: ' + err.message);
+    });
+  });
+
+  /* ================= Modal & Toast ================= */
+  function openModal()  { $('upgradeModal').classList.add('open'); }
+  function closeModal() { $('upgradeModal').classList.remove('open'); }
+  function fakeCheckout() {
+    closeModal();
+    showToast('Demo: replace this with your Lemon Squeezy checkout link');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  var toastTimer = null;
+  function showToast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2600);
+  }
+
+  /* ================= Init ================= */
+  render();
+
+</script>
+</body>
+</html>
